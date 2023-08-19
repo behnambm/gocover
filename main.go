@@ -7,41 +7,48 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 func main() {
 	urlFlag := flag.String("url", "", "URL of the repository to clone")
+	pathFlag := flag.String("path", "", "Path of the directory")
 	flag.Parse()
 
-	// Check if the URL flag is provided
-	if *urlFlag == "" {
-		fmt.Println("Please provide a URL using -url flag.")
+	if *urlFlag == "" && *pathFlag == "" {
+		fmt.Println("Path or Url are not provided")
 		return
 	}
 
-	// Create a temporary directory to clone the repository
-	tempDir, err := os.MkdirTemp("", "git-clone-")
-	if err != nil {
-		fmt.Println("Error creating temporary directory:", err)
+	if *urlFlag != "" && *pathFlag != "" {
+		fmt.Println("Cannot use both Path and Url")
 		return
 	}
 
-	fmt.Println("temp dir: ", tempDir)
+	tempDir := *pathFlag
+	if *urlFlag != "" {
+		var err error
+		tempDir, err = os.MkdirTemp("", "git-clone-")
+		if err != nil {
+			fmt.Println("Error creating temporary directory:", err)
+			return
+		}
+		fmt.Println("temp dir:", tempDir)
 
-	cmd := exec.Command("git", "clone", *urlFlag, tempDir)
-	output, cmdErr := cmd.CombinedOutput()
-	if cmdErr != nil {
-		fmt.Printf("Error cloning repository: %v\nOutput: %s\n", cmdErr, output)
-		return
+		if cloneErr := cloneToPath(*urlFlag, tempDir); cloneErr != nil {
+			fmt.Println("Error cloning the repo: ", cloneErr)
+			return
+		}
 	}
-
-	fmt.Println("Repository cloned successfully!")
-	fmt.Println("Cloned repository path:", tempDir)
 
 	coverProfilePath := filepath.Join(tempDir, "cover.out")
 	os.Chdir(tempDir)
 	testCmd := exec.Command("go", "test", "-coverprofile", coverProfilePath, "./...")
 	testOutput, testCmdErr := testCmd.CombinedOutput()
+	if strings.Contains(string(testOutput), "no test files") {
+		fmt.Println("Tests don't exist")
+		return
+	}
 	if testCmdErr != nil {
 		fmt.Printf("Error running go test: %v\nOutput: %s\n", testCmdErr, testOutput)
 		return
@@ -78,4 +85,18 @@ func openBrowser(htmlFilePath string) error {
 	}
 
 	return err
+}
+
+func cloneToPath(url, path string) error {
+	cmd := exec.Command("git", "clone", url, path)
+	output, cmdErr := cmd.CombinedOutput()
+	if cmdErr != nil {
+		fmt.Printf("Error cloning repository: %v\nOutput: %s\n", cmdErr, output)
+		return cmdErr
+	}
+
+	fmt.Println("Repository cloned successfully!")
+	fmt.Println("Cloned repository path:", path)
+
+	return nil
 }
