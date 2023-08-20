@@ -51,6 +51,8 @@ func main() {
 	coverProfilePath := filepath.Join(tempDir, "cover.out")
 	if *urlFlag != "" {
 		os.Chdir(tempDir)
+	} else if *pathFlag != "." {
+		os.Chdir(*pathFlag)
 	}
 	testCmd := exec.Command("go", "test", "-coverprofile", coverProfilePath, "./...")
 	testOutput, testCmdErr := testCmd.CombinedOutput()
