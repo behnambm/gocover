@@ -39,10 +39,19 @@ func main() {
 			fmt.Println("Error cloning the repo: ", cloneErr)
 			return
 		}
+	} else {
+		var err error
+		tempDir, err = os.MkdirTemp("", "coverage-out-")
+		if err != nil {
+			fmt.Println("Error creating temporary directory:", err)
+			return
+		}
 	}
 
 	coverProfilePath := filepath.Join(tempDir, "cover.out")
-	os.Chdir(tempDir)
+	if *urlFlag != "" {
+		os.Chdir(tempDir)
+	}
 	testCmd := exec.Command("go", "test", "-coverprofile", coverProfilePath, "./...")
 	testOutput, testCmdErr := testCmd.CombinedOutput()
 	if strings.Contains(string(testOutput), "no test files") {
