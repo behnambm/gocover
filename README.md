@@ -47,3 +47,9 @@ gocover -path /home/user/go/src/github.com/labstack/echo
 This is an example of what you will see in your browser:
 
 ![image](https://github.com/behnambm/gocover/assets/26994700/a22deb1e-072c-4e9a-9467-035cdd18ced3)
+
+
+## Todo
+
+- [ ] Refactor the code
+- [ ] Add support for private repositories
